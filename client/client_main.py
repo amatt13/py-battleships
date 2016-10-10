@@ -7,7 +7,7 @@ import time
 
 from Tools.scripts.treesync import raw_input
 
-import ship
+import client.ship as ship
 
 # Set the socket parameters
 HOST = "AndersM-Pc"
