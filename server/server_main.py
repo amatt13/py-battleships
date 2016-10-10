@@ -1,32 +1,23 @@
 import socket
 import numpy
-from enum import  Enum
 import pickle
+from util.util import RequestType as RT, create_message, read_message
 from urllib import request
-import time
-
-from pip._vendor.distlib.compat import raw_input
 
 my_ip = request.urlopen('http://ip.42.pl/raw').read()
 connections = list()
 
 
-class RequestType(Enum):
-    req_map = 0
-    send_map = 1
-    other = 2
-
-
-def check_for_hit(coordinate: str, map):
+def check_for_hit(coordinate: str, map: numpy.ndarray, username: str):
     split_coordinate = coordinate.split(' ')
     x = int(split_coordinate[1]) - 1
     y = (ord(str(split_coordinate[0]))-96) - 1
     if map[y][x] > 0.1:
-        print("Player hit!")
+        print("%s hit!" % username)
         map[y][x] = 0.0
         return True
     else:
-        print("Player missed!")
+        print("%s missed!" % username)
         return False
 
 
@@ -44,7 +35,7 @@ if __name__ == '__main__':
     player_count = 0
     while player_count != 2:
         data, addr = s.recvfrom(buf)
-        L = pickle.loads(data)
+        L = pickle.loads(data)  #TODO convert read_message such that it can be used here
         if not data:
             print("Client has exited!")
             break
@@ -54,7 +45,7 @@ if __name__ == '__main__':
             if player not in connections:  # TODO: make sure that the same player can't connect twice
                 connections.append(player)
                 print("added")
-                s.sendto(pickle.dumps(player_count), addr)
+                s.sendto(create_message(RT.msg.value, player_count), addr)
     print("Two players are now connected")
     for players in connections:
         print(players.get("addr")[0])
@@ -62,6 +53,7 @@ if __name__ == '__main__':
     game_in_progress = True
     turn = 1
     while game_in_progress:
+        print("Turn: %d" % turn)
         if turn % 2 == 0:
             current_player = connections[0]
             waiting_player = connections[1]
@@ -69,15 +61,14 @@ if __name__ == '__main__':
             current_player = connections[1]
             waiting_player = connections[0]
 
-        s.sendto(pickle.dumps("Your turn\nEnter coordinate to bomb:"), current_player.get('addr'))
-        #s.sendto(pickle.dumps("Opponents turn"), waiting_player.get('addr'))
-        package = s.recvfrom(buf)
-        coordinate = pickle.loads(package[0])
-        while check_for_hit(coordinate, waiting_player.get('map')):  # break when player miss
-            s.sendto(pickle.dumps("Hit at : " + coordinate + "\nEnter new coordinate:"), current_player.get('addr'))
-            package = s.recvfrom(buf)
-            coordinate = pickle.loads(package[0])
+        s.sendto(create_message(RT.start_turn.value, "Your turn\nEnter coordinate to bomb:"), current_player.get('addr'))
+        s.sendto((create_message(RT.msg.value, "Opponent %s turn" % current_player.get('username'))), waiting_player.get('addr'))
+        coordinate = read_message(s.recvfrom(buf)[0])
+        while check_for_hit(coordinate[1], waiting_player.get('map'), current_player.get('username')):  # break when player miss
+            s.sendto(create_message(RT.hit.value, "Hit at: " + coordinate[1] + "\nEnter new coordinate:"), current_player.get('addr'))
+            coordinate = read_message(s.recvfrom(buf))
         else:
+            s.sendto(create_message(RT.miss.value, "Miss!\nIt is now the opponents turn"), current_player.get('addr'))
             turn += 1
 
 

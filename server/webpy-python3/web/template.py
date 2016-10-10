@@ -1077,13 +1077,13 @@ def compile_templates(root):
     re_start = re_compile('^', re.M)
     
     for dirpath, dirnames, filenames in os.walk(root):
-        filenames = [f for f in filenames if not f.startswith('.') and not f.endswith('~') and not f.startswith('__init__.py')]
+        filenames = [f for f in filenames if not f.startswith('.') and not f.endswith('~') and not f.startswith('util.py')]
 
         for d in dirnames[:]:
             if d.startswith('.'):
                 dirnames.remove(d) # don't visit this dir
 
-        out = open(os.path.join(dirpath, '__init__.py'), 'w')
+        out = open(os.path.join(dirpath, 'util.py'), 'w')
         out.write('from web.template import CompiledTemplate, ForLoop, TemplateResult\n\n')
         if dirnames:
             out.write("import " + ", ".join(dirnames))

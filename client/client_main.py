@@ -4,6 +4,7 @@ import sys
 import pickle
 import re
 import time
+from util.util import RequestType as RT, create_message, read_message
 
 from pip._vendor.distlib.compat import raw_input
 
@@ -14,6 +15,7 @@ import client.ship as ship
 HOST = "192.168.5.2" #"192.168.87.47" # AndersM-Pc
 PORT = 21
 ADDR = (HOST, PORT)
+BUFFER = 1024
 
 MATCHER = re.compile("(\[[0-9]\])")
 DIMENSIONS = ord(str(sys.argv[1]))-96  # Map dimentions
@@ -101,23 +103,26 @@ def wait_for_message_loop():
     # Create socket and bind to address
     UDPSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     UDPSock.connect(ADDR)
-
     # Send map
     my_id = -1  # Player id
     while int(my_id) < 0:
         if UDPSock.sendto(pickle.dumps((MAP, sys.argv[1], sys.argv[2])), ADDR):
             print("Sending map...")
-            my_id = pickle.loads(UDPSock.recv(8))
+            my_id = read_message(UDPSock.recv(BUFFER))[1]
         else:
             time.sleep(2)  # delays for 2 seconds
     print("You are now connected to the server!\nYou are player " + str(my_id))
 
     # Start game
     while True:
-        data = pickle.loads(UDPSock.recv(256))
-        print("msg from server: ", data)
-        coordinate = raw_input(": ")
-        UDPSock.sendto(pickle.dumps(coordinate), ADDR)
+        msg = read_message(UDPSock.recv(256))
+        if msg[0] == RT.start_turn.value or msg[0] == RT.hit.value:  # Player start turn or hit
+            print("msg from server: ", msg[1])
+            coordinate = raw_input(": ")
+            UDPSock.sendto(pickle.dumps((RT.send_coord.value, coordinate)), ADDR)
+        elif msg[0] == RT.miss.value or msg[0] == RT.msg.value:  # Player missed
+            print("msg from server: ", msg[1])
+
     UDPSock.close()
 
 if __name__ == '__main__':
