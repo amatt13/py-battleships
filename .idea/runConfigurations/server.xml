@@ -5,7 +5,7 @@
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
-    <option name="SDK_HOME" value="E:\Users\Anders\AppData\Local\Programs\Python\Python35-32\python.exe" />
+    <option name="SDK_HOME" value="/usr/bin/python3.4" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/server" />
     <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />

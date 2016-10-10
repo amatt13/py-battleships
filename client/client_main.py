@@ -5,13 +5,13 @@ import pickle
 import re
 import time
 
-from Tools.scripts.treesync import raw_input
+from pip._vendor.distlib.compat import raw_input
 
 import client.ship as ship
 
 # Set the socket parameters
-HOST = "AndersM-Pc"
-PORT = 10000
+HOST = "192.168.87.47" #"192.168.5.2" #"AndersM-Pc"
+PORT = 21
 ADDR = (HOST, PORT)
 
 MATCHER = re.compile("(\[[0-9]\])")
