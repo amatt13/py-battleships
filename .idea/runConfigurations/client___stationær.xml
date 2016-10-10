@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="client" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="client - stationær" type="PythonConfigurationType" factoryName="Python">
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
@@ -12,7 +12,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <module name="py-battleships" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/client/client_main.py" />
-    <option name="PARAMETERS" value="j username" />
+    <option name="PARAMETERS" value="j stationær" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <method />
   </configuration>

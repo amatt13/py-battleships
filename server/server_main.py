@@ -33,9 +33,9 @@ def check_for_hit(coordinate: str, map):
 if __name__ == '__main__':
     #x = raw_input('What is your name?')
 
-    port = 10000
+    port = 21
     buf = 4096
-
+    print(socket.gethostname())
     # Create socket and bind to address
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((socket.gethostname(), port))
@@ -50,7 +50,7 @@ if __name__ == '__main__':
             break
         else:
             player_count += 1
-            player = {'addr': addr, 'map': L, 'player_id': player_count}
+            player = {'addr': addr, 'player_id': player_count, 'map': L[0], 'map_size': L[1], 'username': L[2]}
             if player not in connections:  # TODO: make sure that the same player can't connect twice
                 connections.append(player)
                 print("added")
