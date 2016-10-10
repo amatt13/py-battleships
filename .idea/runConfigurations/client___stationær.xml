@@ -1,18 +1,18 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="client" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="client - stationær" type="PythonConfigurationType" factoryName="Python">
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
-    <option name="SDK_HOME" value="/usr/bin/python3.4" />
+    <option name="SDK_HOME" value="E:\Users\Anders\AppData\Local\Programs\Python\Python35-32\python.exe" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/client" />
     <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <module name="py-battleships" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/client/client_main.py" />
-    <option name="PARAMETERS" value="j username" />
+    <option name="PARAMETERS" value="j stationær" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <method />
   </configuration>

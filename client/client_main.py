@@ -10,8 +10,9 @@ from pip._vendor.distlib.compat import raw_input
 import client.ship as ship
 
 # Set the socket parameters
-HOST = "192.168.87.47" #"192.168.5.2" #"AndersM-Pc"
-PORT = 21
+
+HOST = "192.168.5.2" #"192.168.87.47" # AndersM-Pc
+    PORT = 21
 ADDR = (HOST, PORT)
 
 MATCHER = re.compile("(\[[0-9]\])")
@@ -104,7 +105,7 @@ def wait_for_message_loop():
     # Send map
     my_id = -1  # Player id
     while int(my_id) < 0:
-        if UDPSock.sendto(pickle.dumps(MAP), ADDR):
+        if UDPSock.sendto(pickle.dumps((MAP, sys.argv[1], sys.argv[2])), ADDR):
             print("Sending map...")
             my_id = pickle.loads(UDPSock.recv(8))
         else:
