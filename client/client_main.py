@@ -12,7 +12,7 @@ import client.ship as ship
 # Set the socket parameters
 
 HOST = "192.168.5.2" #"192.168.87.47" # AndersM-Pc
-    PORT = 21
+PORT = 21
 ADDR = (HOST, PORT)
 
 MATCHER = re.compile("(\[[0-9]\])")
