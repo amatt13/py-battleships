@@ -1,5 +1,6 @@
 import socket
 import numpy
+import time
 from util.util import RequestType as RT, create_message, read_message as rm, read_request_type as rt, read_package as rp, read_player_info_package as rpip
 
 connections = list()
@@ -19,6 +20,7 @@ def check_for_hit(coordinate: str, map: numpy.ndarray, username: str):
 
 
 def accept_player(player_info: dict, player_count: int):
+    time.sleep(1)
     connections.append(player)
     s.sendto(create_message(RT.joined_game.value, str(player_count)), player_info.get('addr'))  # Inform player of succ conn and player ID
     print("Added player " + player.get('username'))
@@ -27,7 +29,6 @@ def accept_player(player_info: dict, player_count: int):
 
 def recv_basic(the_socket):
     d, addr = the_socket.recvfrom(8192)
-    print(d)
     the_socket.close()
     return d, addr
 
@@ -43,6 +44,7 @@ if __name__ == '__main__':
 
     player_count = 0
     while player_count != 2:
+        print("Comming trough " + str(player_count))
         data, addr = recv_basic(s)
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.bind((socket.gethostname(), port))
@@ -72,9 +74,10 @@ if __name__ == '__main__':
                                             % (player.get('map_size'), p.get('map_size'))
                                             ), addr)  # Send incorrect map size msg
                 else:  # Successful addition of player (trivial when connection.size = 0)
-                    accept_player(player_info=player, player_count=player_count)
+                    player_count = accept_player(player_info=player, player_count=player_count)
+                    break
             if player_count == 0:  # Accept the first player
-                accept_player(player_info=player, player_count=player_count)
+                player_count = accept_player(player_info=player, player_count=player_count)
 
     print("Two players are now connected")
     for players in connections:
