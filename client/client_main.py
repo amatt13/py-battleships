@@ -1,10 +1,8 @@
 import socket
 import numpy
 import sys
-import pickle
 import re
-import time
-from util.util import RequestType as RT, create_message, read_message
+from util.util import RequestType as RT, create_message, read_message as rm, read_package as rp, read_request_type as rt
 import warnings
 
 
@@ -145,47 +143,61 @@ def valid_coordinate(coordinate: str):
         return False
 
 
-def wait_for_message_loop():
-    # Create socket and bind to address
+def game_in_progress_loop(s: socket):
+    while True:
+        package = rp(s.recv(256))
+        request_type = package.get("rt")
+        message = package.get("msg")
+        if request_type == RT.start_turn.value:  # Player start turn
+            print("msg from server: ", message)
+            coordinate = raw_input(": ")
+            while not valid_coordinate(coordinate=coordinate):
+                coordinate = raw_input(": ")
+            s.sendto(create_message(RT.send_coord.value, coordinate), ADDR)
+        elif request_type == RT.hit.value:  # Player hit
+            draw_opponents_map(coordinate=coordinate, hit=True)
+            print("msg from server: ", message)
+            coordinate = raw_input(": ")
+            while not valid_coordinate(coordinate=coordinate):
+                coordinate = raw_input(": ")
+            s.sendto(create_message(RT.send_coord.value, coordinate), ADDR)
+        elif request_type == RT.miss.value:  # Player missed
+            draw_opponents_map(coordinate=coordinate, hit=False)
+            print("msg from server: ", message)
+
+    s.close()
+
+
+def join_game():
     UDPSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     UDPSock.connect(ADDR)
-    # Send map
-    my_id = -1  # Player id
-    while int(my_id) < 0:
-        if UDPSock.sendto(pickle.dumps((MAP, sys.argv[1], sys.argv[2])), ADDR):
-            print("Sending map...")
-            my_id = read_message(UDPSock.recv(BUFFER))[1]
-        else:
-            time.sleep(2)  # delays for 2 seconds
-    print("You are now connected to the server!\nYou are player " + str(my_id))
-
-    # Start game
+    print("Joining game...")
+    username = sys.argv[2]
     while True:
-        msg = read_message(UDPSock.recv(256))
-        if msg[0] == RT.start_turn.value:  # Player start turn
-            print("msg from server: ", msg[1])
-            coordinate = raw_input(": ")
-            while not valid_coordinate(coordinate=coordinate):
-                coordinate = raw_input(": ")
-            UDPSock.sendto(create_message(RT.send_coord.value, coordinate), ADDR)
-        elif msg[0] == RT.hit.value:  # Player hit
-            draw_opponents_map(coordinate=coordinate, hit=True)
-            print("msg from server: ", msg[1])
-            coordinate = raw_input(": ")
-            while not valid_coordinate(coordinate=coordinate):
-                coordinate = raw_input(": ")
-            UDPSock.sendto(create_message(RT.send_coord.value, coordinate), ADDR)
-        elif msg[0] == RT.miss.value:  # Player missed
-            draw_opponents_map(coordinate=coordinate, hit=False)
-            print("msg from server: ", msg[1])
+        msg = create_message(RT.send_map.value, {'map': MAP, 'map_size': sys.argv[1], 'username': username})
+        UDPSock.sendto(msg[1], ADDR)
+        UDPSock.close()
+        package = rp(UDPSock.recv(1024))
+        request_type = package.get("rt")
+        if request_type == RT.joined_game:  # Game joined
+            message = package.get("msg")  # Player ID (sever: player_count)
+            my_id = int(message)
+            print("Game joined!\nYou are player " + str(my_id))
+            return UDPSock
+        elif request_type == RT.username_taken.value:  # Username taken
+            print("Your username have already been taken (%s)" % sys.argv[2])
+            username = raw_input("Chose a new username\n: ")
+        elif request_type == RT.map_size_error.value:  # Map size differs from opponent
+            print(package.get("msg"))  # info about client's and opponent's map size
+            sys.exit()
 
-    UDPSock.close()
 
 if __name__ == '__main__':
     load_map()
     check_ship_positions()
     # Send map and start game!
-    wait_for_message_loop()
+    connection = join_game()
+    game_in_progress_loop(connection)
 
 
 
