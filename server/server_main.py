@@ -18,30 +18,24 @@ def check_for_hit(coordinate: str, map: numpy.ndarray, username: str):
         return False
 
 
-def accept_player(plyer_info: dict, player_count: int):
+def accept_player(player_info: dict, player_count: int):
     connections.append(player)
-    s.sendto(create_message(RT.joined_game.value, str(player_count)), plyer_info.get('addr'))  # Inform player of succ conn and player ID
+    s.sendto(create_message(RT.joined_game.value, str(player_count)), player_info.get('addr'))  # Inform player of succ conn and player ID
     print("Added player " + player.get('username'))
     return player_count + 1
 
 
 def recv_basic(the_socket):
-    total_data = []
-    print("entered")
-    the_socket.settimeout(3.0)
-    while True:
-        d, addr = the_socket.recvfrom(8192)
-        print(d)
-        if not d: break
-        total_data.append(d)
-    return ''.join(total_data)
+    d, addr = the_socket.recvfrom(8192)
+    print(d)
+    the_socket.close()
+    return d, addr
 
 
 if __name__ == '__main__':
     #x = raw_input('What is your name?')
 
     port = 21
-    buf = 200
     print(socket.gethostname())
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((socket.gethostname(), port))
@@ -49,8 +43,9 @@ if __name__ == '__main__':
 
     player_count = 0
     while player_count != 2:
-        data = recv_basic(s)
-        print(data)
+        data, addr = recv_basic(s)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind((socket.gethostname(), port))
         if data:
             player_info = rpip(data)
             player = {'addr': addr,  # IP, Port
@@ -77,9 +72,9 @@ if __name__ == '__main__':
                                             % (player.get('map_size'), p.get('map_size'))
                                             ), addr)  # Send incorrect map size msg
                 else:  # Successful addition of player (trivial when connection.size = 0)
-                    accept_player(plyer_info=player, player_count=player_count)
+                    accept_player(player_info=player, player_count=player_count)
             if player_count == 0:  # Accept the first player
-                accept_player(plyer_info=player, player_count=player_count)
+                accept_player(player_info=player, player_count=player_count)
 
     print("Two players are now connected")
     for players in connections:
@@ -103,7 +98,7 @@ if __name__ == '__main__':
                                  "Opponent %s's turn" % current_player.get('username'))), waiting_player.get('addr'))
 
         while True:  #TODO: create a win condition
-            package = rp(s.recvfrom(buf)[0])
+            package = rp(s.recvfrom(1024)[0])
             request_type = package.get('rt')
             message = package.get('msg')
             if request_type == RT.send_coord:  # player send a coordinate they wish to bomb
@@ -111,7 +106,7 @@ if __name__ == '__main__':
                     s.sendto(create_message(RT.hit.value,
                                             "Hit at: " + message + "\nEnter new coordinate:"
                                             ), current_player.get('addr'))
-                    coordinate = rm(s.recvfrom(buf))  # Only read the message
+                    coordinate = rm(s.recvfrom(1024))  # Only read the message
                 else:  # player missed
                     s.sendto(create_message(RT.miss.value, "Miss!\nIt is now the opponents turn"), current_player.get('addr'))
                     turn += 1

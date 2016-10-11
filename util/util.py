@@ -23,8 +23,8 @@ def create_message(request_type: int, message):
         print("Empty message")
         sys.exit()
     if type(message) is dict: # message is dict
-        return sys.getsizeof(pickle.dumps(message)), pickle.dumps(message)
-    return sys.getsizeof(pickle.dumps(str(request_type) + "#" + message)), pickle.dumps(str(request_type) + "#" + message)
+        return pickle.dumps(message)
+    return pickle.dumps(str(request_type) + "#" + message)
 
 
 def read_player_info_package(package):  # (request_type, #dict)
