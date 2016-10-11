@@ -13,7 +13,7 @@ import client.ship as ship
 # Set the socket parameters
 
 HOST = "192.168.5.2" #"192.168.87.47" # AndersM-Pc
-PORT = 21
+PORT = 10000
 ADDR = (HOST, PORT)
 BUFFER = 1024
 
@@ -163,6 +163,8 @@ def game_in_progress_loop(s: socket):
             s.sendto(create_message(RT.send_coord.value, coordinate), ADDR)
         elif request_type == RT.miss.value:  # Player missed
             draw_opponents_map(coordinate=coordinate, hit=False)
+            print("msg from server: ", message)
+        elif request_type == RT.msg.value:  # Message from server
             print("msg from server: ", message)
 
     s.close()
