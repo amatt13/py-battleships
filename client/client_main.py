@@ -175,8 +175,10 @@ def join_game():
     username = sys.argv[2]
     while True:
         msg = create_message(RT.send_map.value, {'map': MAP, 'map_size': sys.argv[1], 'username': username})
-        UDPSock.sendto(msg[1], ADDR)
+        UDPSock.sendto(msg, ADDR)
         UDPSock.close()
+        UDPSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        UDPSock.connect(ADDR)
         package = rp(UDPSock.recv(1024))
         request_type = package.get("rt")
         if request_type == RT.joined_game:  # Game joined
