@@ -2,9 +2,7 @@ import socket
 import numpy
 import pickle
 from util.util import RequestType as RT, create_message, read_message
-from urllib import request
 
-my_ip = request.urlopen('http://ip.42.pl/raw').read()
 connections = list()
 
 
@@ -62,7 +60,7 @@ if __name__ == '__main__':
             waiting_player = connections[0]
 
         s.sendto(create_message(RT.start_turn.value, "Your turn\nEnter coordinate to bomb:"), current_player.get('addr'))
-        s.sendto((create_message(RT.msg.value, "Opponent %s turn" % current_player.get('username'))), waiting_player.get('addr'))
+        s.sendto((create_message(RT.msg.value, "Opponent %s's turn" % current_player.get('username'))), waiting_player.get('addr'))
         coordinate = read_message(s.recvfrom(buf)[0])
         while check_for_hit(coordinate[1], waiting_player.get('map'), current_player.get('username')):  # break when player miss
             s.sendto(create_message(RT.hit.value, "Hit at: " + coordinate[1] + "\nEnter new coordinate:"), current_player.get('addr'))

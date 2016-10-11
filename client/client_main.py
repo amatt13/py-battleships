@@ -5,6 +5,8 @@ import pickle
 import re
 import time
 from util.util import RequestType as RT, create_message, read_message
+import warnings
+
 
 from pip._vendor.distlib.compat import raw_input
 
@@ -18,10 +20,16 @@ ADDR = (HOST, PORT)
 BUFFER = 1024
 
 MATCHER = re.compile("(\[[0-9]\])")
-DIMENSIONS = ord(str(sys.argv[1]))-96  # Map dimentions
+DIMENSIONS = ord(str(sys.argv[1]).lower())-96  # Map dimentions
 SHIPS_ALLOWED = 4
 SHIPS = list()
 MAP = numpy.zeros(shape=(DIMENSIONS, DIMENSIONS))  # Matrix
+OP_MAP = numpy.chararray((DIMENSIONS, DIMENSIONS))
+OP_MAP[:] = ' '
+
+
+def fxn():
+    warnings.warn("VisibleDeprecationWarning", numpy.VisibleDeprecationWarning)
 
 
 def check_width(first_line: str):
@@ -90,13 +98,51 @@ def build_ship(ship_id, x, y):
 
 
 def check_ship_positions():
-    available_ships = numpy.arange(start=1, stop=SHIPS_ALLOWED + 1, step=1, dtype=numpy.int16)  # Make a list of available ship IDs
-    for y, row in enumerate(MAP):  # Check all columns
-        for x, field in enumerate(row):  # Check all rows
-            if 0 < field <= SHIPS_ALLOWED:  # Check if the field is a ship ID
-                if field in available_ships:  # If ship ID is allowed ==> build ship
-                    build_ship(field, x, y)
-                    available_ships[field-1] = 99  # The ID can no longer be used
+    with warnings.catch_warnings(record=True):  # Suspend the VisibleDeprecationWarning
+        available_ships = numpy.arange(start=1, stop=SHIPS_ALLOWED + 1, step=1, dtype=numpy.int16)  # Make a list of available ship IDs
+        for y, row in enumerate(MAP):  # Check all columns
+            for x, field in enumerate(row):  # Check all rows
+                if 0 < field <= SHIPS_ALLOWED:  # Check if the field is a ship ID
+                    if field in available_ships:  # If ship ID is allowed ==> build ship
+                        build_ship(field, x, y)
+                        available_ships[field-1] = 99  # The ID can no longer be used
+
+
+def draw_opponents_map(coordinate: str, hit: bool):
+    split_coordinate = coordinate.split(' ')
+    x = int(split_coordinate[1]) - 1
+    y = (ord(str(split_coordinate[0])) - 96) - 1
+    if hit:
+        OP_MAP[y][x] = 'X'
+    else:
+        OP_MAP[y][x] = 'O'
+    sys.stdout.write(' ')
+    for i in range(DIMENSIONS):
+        if i < 10:
+            sys.stdout.write('   ' + str(i+1))
+        else:
+            sys.stdout.write('  ' + str(i + 1))
+    print()
+    for letter, row in enumerate(OP_MAP):
+        print("%s %s" % (str(chr(letter+97)), row.decode('utf-8')))
+
+
+def valid_coordinate(coordinate: str):
+    split_coordinate = coordinate.split(' ')
+    x = int(split_coordinate[1]) - 1
+    y = (ord(str(split_coordinate[0])) - 96) - 1
+    if x < 0 or y < 0:
+        print("Invalid coordinate\nCan't use negative values\nEnter new coordinate")
+        return False
+    try:
+        if OP_MAP[y][x] is '':
+            return True
+        else:
+            print("Invalid coordinate\nYou have already targeted that position\nEnter new coordinate")
+            return False
+    except IndexError:
+        print("Invalid coordinate\nOut of bounds\nEnter new coordinate")
+        return False
 
 
 def wait_for_message_loop():
@@ -116,11 +162,21 @@ def wait_for_message_loop():
     # Start game
     while True:
         msg = read_message(UDPSock.recv(256))
-        if msg[0] == RT.start_turn.value or msg[0] == RT.hit.value:  # Player start turn or hit
+        if msg[0] == RT.start_turn.value:  # Player start turn
             print("msg from server: ", msg[1])
             coordinate = raw_input(": ")
-            UDPSock.sendto(pickle.dumps((RT.send_coord.value, coordinate)), ADDR)
-        elif msg[0] == RT.miss.value or msg[0] == RT.msg.value:  # Player missed
+            while not valid_coordinate(coordinate=coordinate):
+                coordinate = raw_input(": ")
+            UDPSock.sendto(create_message(RT.send_coord.value, coordinate), ADDR)
+        elif msg[0] == RT.hit.value:  # Player hit
+            draw_opponents_map(coordinate=coordinate, hit=True)
+            print("msg from server: ", msg[1])
+            coordinate = raw_input(": ")
+            while not valid_coordinate(coordinate=coordinate):
+                coordinate = raw_input(": ")
+            UDPSock.sendto(create_message(RT.send_coord.value, coordinate), ADDR)
+        elif msg[0] == RT.miss.value:  # Player missed
+            draw_opponents_map(coordinate=coordinate, hit=False)
             print("msg from server: ", msg[1])
 
     UDPSock.close()

@@ -12,7 +12,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <module name="py-battleships" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/client/client_main.py" />
-    <option name="PARAMETERS" value="j stationær" />
+    <option name="PARAMETERS" value="k stationær" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <method />
   </configuration>
